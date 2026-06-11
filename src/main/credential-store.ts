@@ -130,7 +130,7 @@ export function registerCredentialHandlers(): void {
 
   ipcMain.handle('groups:delete', (_e, name: string) => {
     saveGroups(loadGroups().filter(g => g !== name))
-    save(load().filter(s => s.group !== name))
+    save(load().map(s => s.group === name ? { ...s, group: '' } : s))
   })
 
   // Returns decrypted credentials — only called internally by ssh-manager via direct import

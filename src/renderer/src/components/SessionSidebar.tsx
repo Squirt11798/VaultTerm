@@ -258,7 +258,7 @@ export default function SessionSidebar({
                   <div className="context-divider" />
                   <button className="danger" onClick={() => {
                     const msg = count > 0
-                      ? `Delete group "${name}" and its ${count} session${count !== 1 ? 's' : ''}?`
+                      ? `Delete group "${name}"? Its ${count} session${count !== 1 ? 's' : ''} will be moved to Ungrouped.`
                       : `Delete group "${name}"?`
                     if (confirm(msg)) onDeleteGroup(name)
                     closeCtx()
