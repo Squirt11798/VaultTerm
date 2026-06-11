@@ -8,8 +8,9 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "dist": "npm run build && electron-packager . VaultTerm --platform=win32 --arch=x64 --out=dist --overwrite --icon=assets/icon.ico --ignore=src --ignore=node_modules/.cache",
-    "dist:zip": "npm run dist && powershell Compress-Archive -Path dist/VaultTerm-win32-x64 -DestinationPath dist/VaultTerm-portable.zip -Force",
+    "predist": "node scripts/setup-wcs.mjs",
+    "dist": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win portable",
+    "dist:folder": "npm run build && electron-packager . VaultTerm --platform=win32 --arch=x64 --out=dist --overwrite --icon=assets/icon.ico --ignore=src --ignore=node_modules/.cache",
     "make-icon": "node scripts/make-icon.mjs",
     "typecheck": "tsc --noEmit"
   },
@@ -28,6 +29,7 @@
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-web-links": "^0.11.0",
     "@xterm/xterm": "^5.5.0",
+    "cross-env": "^10.1.0",
     "electron": "^31.0.0",
     "electron-builder": "^24.13.3",
     "electron-vite": "^2.3.0",
