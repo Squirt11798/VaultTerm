@@ -205,6 +205,22 @@ export function registerSshHandlers(win: BrowserWindow): void {
     })
   })
 
+  // ── Exec (non-interactive) ─────────────────────────────────────────────────
+
+  ipcMain.handle('ssh:exec', (_e, connId: string, command: string): Promise<string> => {
+    const conn = connections.get(connId)
+    if (!conn) return Promise.reject(new Error('Not connected'))
+    return new Promise((resolve, reject) => {
+      conn.client.exec(command, (err, stream) => {
+        if (err) return reject(err)
+        let out = ''
+        stream.on('data', (d: Buffer) => { out += d.toString() })
+        stream.stderr.on('data', (d: Buffer) => { out += d.toString() })
+        stream.on('close', () => resolve(out))
+      })
+    })
+  })
+
   ipcMain.handle('sftp:pwd', async (_e, connId: string) => {
     const sftp = await getSftp(connId)
     return new Promise<string>((resolve, reject) => {

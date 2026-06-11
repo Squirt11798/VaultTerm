@@ -29,6 +29,7 @@ const api = {
       ipcRenderer.on('ssh:data', handler)
       return () => ipcRenderer.off('ssh:data', handler)
     },
+    exec: (connId: string, command: string): Promise<string> => ipcRenderer.invoke('ssh:exec', connId, command),
     onClosed: (cb: (connId: string) => void) => {
       const handler = (_e: Electron.IpcRendererEvent, connId: string) => cb(connId)
       ipcRenderer.on('ssh:closed', handler)

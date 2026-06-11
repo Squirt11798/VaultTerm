@@ -152,7 +152,7 @@ body { font-family: system-ui, sans-serif; font-size: 13px; color: var(--text); 
 .tab-new:hover { color: var(--text); }
 
 /* ── Terminal ── */
-.tab-content { flex: 1; display: none; overflow: hidden; }
+.tab-content { flex: 1; display: none; overflow: hidden; width: 100%; }
 .tab-content.visible { display: flex; }
 .tab-content.hidden { display: none; }
 
@@ -325,6 +325,53 @@ body { font-family: system-ui, sans-serif; font-size: 13px; color: var(--text); 
 }
 .context-menu button:hover { background: var(--bg-3); }
 .context-menu button.danger { color: var(--danger); }
+
+/* ── Content area ── */
+.content-area { flex: 1; display: flex; overflow: hidden; }
+
+/* ── Tab toolbar ── */
+.tab-toolbar { margin-left: auto; display: flex; align-items: center; gap: 2px; padding-right: 6px; }
+.toolbar-btn {
+  background: none; border: none; cursor: pointer;
+  padding: 4px 8px; border-radius: 4px;
+  font-size: 15px; opacity: 0.5;
+  transition: opacity 0.1s, background 0.1s;
+}
+.toolbar-btn:hover:not(:disabled) { background: var(--bg-3); opacity: 1; }
+.toolbar-btn.active { opacity: 1; background: var(--bg-3); }
+.toolbar-btn:disabled { cursor: default; opacity: 0.25; }
+
+/* ── Resource Monitor ── */
+.resource-monitor {
+  height: 32px;
+  background: var(--bg-1);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 10px; gap: 4px;
+  flex-shrink: 0; overflow: hidden;
+  font-size: 11px;
+}
+.resource-monitor.error {
+  color: var(--text-dim); justify-content: center;
+}
+.rm-item {
+  display: flex; align-items: center; gap: 5px;
+  white-space: nowrap;
+}
+.rm-item.narrow { gap: 4px; }
+.rm-icon { font-size: 12px; flex-shrink: 0; }
+.rm-icon.net-down { color: #6bff9e; font-size: 13px; font-weight: bold; }
+.rm-icon.net-up   { color: #ff9e6b; font-size: 13px; font-weight: bold; }
+.rm-label { color: var(--text-dim); min-width: 26px; }
+.rm-value { font-family: monospace; font-size: 11px; color: var(--text); min-width: 80px; }
+.rm-item.narrow .rm-value { min-width: unset; }
+.rm-bar-track {
+  width: 60px; height: 8px;
+  background: var(--bg-3); border-radius: 4px; overflow: hidden;
+  flex-shrink: 0;
+}
+.rm-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease, background 0.4s ease; }
+.rm-divider { width: 1px; height: 18px; background: var(--border); margin: 0 6px; flex-shrink: 0; }
 
 /* ── Scrollbars ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }

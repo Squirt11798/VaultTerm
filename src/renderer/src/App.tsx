@@ -3,12 +3,12 @@ import SessionSidebar from './components/SessionSidebar'
 import Terminal from './components/Terminal'
 import SftpPanel from './components/SftpPanel'
 import ConnectModal from './components/ConnectModal'
+import ResourceMonitor from './components/ResourceMonitor'
 
 export interface Tab {
-  id: string          // connection id from ssh-manager
+  id: string
   label: string
   host: string
-  showSftp: boolean
 }
 
 export interface SavedSession {
@@ -22,6 +22,8 @@ export interface SavedSession {
   createdAt: string
 }
 
+type RightPanel = 'sftp' | 'none'
+
 export default function App() {
   const [tabs, setTabs] = useState<Tab[]>([])
   const [activeTab, setActiveTab] = useState<string | null>(null)
@@ -29,6 +31,8 @@ export default function App() {
   const [showConnect, setShowConnect] = useState(false)
   const [connectPrefill, setConnectPrefill] = useState<SavedSession | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [rightPanel, setRightPanel] = useState<RightPanel>('none')
+  const [showMonitor, setShowMonitor] = useState(true)
 
   const loadSessions = useCallback(async () => {
     const list = await window.api.sessions.list()
@@ -38,8 +42,11 @@ export default function App() {
   useEffect(() => {
     loadSessions()
     const unsub = window.api.ssh.onClosed((connId) => {
-      setTabs(prev => prev.filter(t => t.id !== connId))
-      setActiveTab(prev => prev === connId ? null : prev)
+      setTabs(prev => {
+        const next = prev.filter(t => t.id !== connId)
+        setActiveTab(prev2 => prev2 === connId ? (next[next.length - 1]?.id ?? null) : prev2)
+        return next
+      })
     })
     return unsub
   }, [loadSessions])
@@ -57,12 +64,7 @@ export default function App() {
   }) => {
     try {
       const { id } = await window.api.ssh.connect(opts)
-      const tab: Tab = {
-        id,
-        label: opts.label,
-        host: opts.host,
-        showSftp: false
-      }
+      const tab: Tab = { id, label: opts.label, host: opts.host }
       setTabs(prev => [...prev, tab])
       setActiveTab(id)
       setShowConnect(false)
@@ -75,16 +77,17 @@ export default function App() {
     await window.api.ssh.disconnect(connId)
     setTabs(prev => {
       const next = prev.filter(t => t.id !== connId)
-      if (activeTab === connId) setActiveTab(next[next.length - 1]?.id ?? null)
+      setActiveTab(cur => cur === connId ? (next[next.length - 1]?.id ?? null) : cur)
       return next
     })
-  }, [activeTab])
-
-  const toggleSftp = useCallback((connId: string) => {
-    setTabs(prev => prev.map(t => t.id === connId ? { ...t, showSftp: !t.showSftp } : t))
   }, [])
 
+  const toggleRightPanel = (panel: RightPanel) => {
+    setRightPanel(prev => prev === panel ? 'none' : panel)
+  }
+
   const activeTabData = tabs.find(t => t.id === activeTab)
+  const isConnected = tabs.length > 0 && activeTab !== null
 
   return (
     <div className="app">
@@ -112,7 +115,7 @@ export default function App() {
 
         {/* Main area */}
         <div className="main-area">
-          {/* Tab bar */}
+          {/* Tab bar + toolbar */}
           {tabs.length > 0 && (
             <div className="tab-bar">
               {tabs.map(tab => (
@@ -123,39 +126,61 @@ export default function App() {
                 >
                   <span className="tab-label">{tab.label}</span>
                   <button
-                    className="tab-sftp-btn"
-                    title="Toggle SFTP panel"
-                    onClick={e => { e.stopPropagation(); toggleSftp(tab.id) }}
-                  >⇄</button>
-                  <button
                     className="tab-close"
                     onClick={e => { e.stopPropagation(); closeTab(tab.id) }}
                   >✕</button>
                 </div>
               ))}
               <button className="tab-new" onClick={() => { setConnectPrefill(null); setShowConnect(true) }}>+</button>
+
+              {/* Right-side toolbar icons */}
+              <div className="tab-toolbar">
+                <button
+                  className={`toolbar-btn ${rightPanel === 'sftp' ? 'active' : ''}`}
+                  title="File Browser (SFTP)"
+                  onClick={() => toggleRightPanel('sftp')}
+                  disabled={!isConnected}
+                >
+                  📁
+                </button>
+                <button
+                  className={`toolbar-btn ${showMonitor ? 'active' : ''}`}
+                  title="Resource Monitor"
+                  onClick={() => setShowMonitor(v => !v)}
+                  disabled={!isConnected}
+                >
+                  📊
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Terminal + SFTP panes */}
-          {tabs.map(tab => (
-            <div key={tab.id} className={`tab-content ${tab.id === activeTab ? 'visible' : 'hidden'}`}>
-              <div className={`pane-wrapper ${tab.showSftp ? 'split' : ''}`}>
-                <Terminal connId={tab.id} active={tab.id === activeTab} />
-                {tab.showSftp && <SftpPanel connId={tab.id} />}
+          {/* Content: terminals + optional SFTP panel */}
+          <div className="content-area">
+            {tabs.map(tab => (
+              <div key={tab.id} className={`tab-content ${tab.id === activeTab ? 'visible' : 'hidden'}`}>
+                <div className={`pane-wrapper ${rightPanel === 'sftp' ? 'split' : ''}`}>
+                  <Terminal connId={tab.id} active={tab.id === activeTab} />
+                  {rightPanel === 'sftp' && <SftpPanel connId={tab.id} />}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
 
-          {tabs.length === 0 && (
-            <div className="empty-state">
-              <div className="empty-logo">⚡</div>
-              <h2>VaultTerm</h2>
-              <p>No active connections</p>
-              <button className="btn-primary" onClick={() => { setConnectPrefill(null); setShowConnect(true) }}>
-                New Connection
-              </button>
-            </div>
+            {tabs.length === 0 && (
+              <div className="empty-state">
+                <div className="empty-logo">⚡</div>
+                <h2>VaultTerm</h2>
+                <p>No active connections</p>
+                <button className="btn-primary" onClick={() => { setConnectPrefill(null); setShowConnect(true) }}>
+                  New Connection
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Resource monitor bar — only when connected and enabled */}
+          {isConnected && showMonitor && activeTabData && (
+            <ResourceMonitor connId={activeTabData.id} />
           )}
         </div>
       </div>
