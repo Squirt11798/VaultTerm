@@ -42,6 +42,15 @@ export default function SessionSidebar({
   const newGroupInputRef = useRef<HTMLInputElement>(null)
   const [dragSessionId, setDragSessionId] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+
+  const toggleGroupCollapse = (group: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev)
+      next.has(group) ? next.delete(group) : next.add(group)
+      return next
+    })
+  }
 
   const openCtx = useCallback((e: React.MouseEvent, target: ContextTarget) => {
     e.preventDefault()
@@ -171,11 +180,20 @@ export default function SessionSidebar({
                         onClick={e => e.stopPropagation()}
                       />
                     ) : (
-                      <>▸ {group} <span className="group-count">({sessionsByGroup[group]?.length ?? 0})</span></>
+                      <>
+                        <span
+                          className="group-arrow"
+                          onClick={e => { e.stopPropagation(); toggleGroupCollapse(group) }}
+                          title={collapsedGroups.has(group) ? 'Expand' : 'Collapse'}
+                        >
+                          {collapsedGroups.has(group) ? '▸' : '▾'}
+                        </span>
+                        {group} <span className="group-count">({sessionsByGroup[group]?.length ?? 0})</span>
+                      </>
                     )}
                   </div>
 
-                  {(sessionsByGroup[group] ?? []).map(s => (
+                  {!collapsedGroups.has(group) && (sessionsByGroup[group] ?? []).map(s => (
                     <div
                       key={s.id}
                       className={`session-item ${dragSessionId === s.id ? 'dragging' : ''}`}

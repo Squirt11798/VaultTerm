@@ -400,6 +400,12 @@ body { font-family: system-ui, sans-serif; font-size: 13px; color: var(--text); 
 }
 .context-divider { height: 1px; background: var(--border); margin: 3px 0; }
 .group-count { color: var(--text-dim); font-size: 10px; }
+.group-arrow {
+  display: inline-block; width: 14px; text-align: center;
+  cursor: pointer; color: var(--text-dim); flex-shrink: 0;
+  border-radius: 2px; padding: 0 1px;
+}
+.group-arrow:hover { color: var(--text); background: var(--bg-3); }
 .new-group-row {
   display: flex; align-items: center; gap: 6px;
   padding: 5px 10px;
