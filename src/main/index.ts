@@ -84,6 +84,19 @@ ipcMain.handle('dialog:saveFile', async (_e, defaultName: string) => {
   return result.canceled ? null : result.filePath
 })
 
+// MobaXterm config importer
+ipcMain.handle('dialog:openMobaConf', async () => {
+  const result = await dialog.showOpenDialog(mainWindow!, {
+    title: 'Import MobaXterm Configuration',
+    filters: [
+      { name: 'MobaXterm Configuration', extensions: ['mobaconf', 'ini'] },
+      { name: 'All Files', extensions: ['*'] }
+    ],
+    properties: ['openFile']
+  })
+  return result.canceled ? null : result.filePaths[0]
+})
+
 // Upload file chooser
 ipcMain.handle('dialog:openFile', async () => {
   const result = await dialog.showOpenDialog(mainWindow!, {

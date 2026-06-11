@@ -10,13 +10,16 @@ const api = {
   dialog: {
     openKey: (): Promise<string | null> => ipcRenderer.invoke('dialog:openKey'),
     saveFile: (defaultName: string): Promise<string | null> => ipcRenderer.invoke('dialog:saveFile', defaultName),
-    openFile: (): Promise<string[]> => ipcRenderer.invoke('dialog:openFile')
+    openFile: (): Promise<string[]> => ipcRenderer.invoke('dialog:openFile'),
+    openMobaConf: (): Promise<string | null> => ipcRenderer.invoke('dialog:openMobaConf')
   },
 
   sessions: {
     list: () => ipcRenderer.invoke('sessions:list'),
     save: (session: object) => ipcRenderer.invoke('sessions:save', session),
-    delete: (id: string) => ipcRenderer.invoke('sessions:delete', id)
+    delete: (id: string) => ipcRenderer.invoke('sessions:delete', id),
+    importMoba: (filePath: string): Promise<{ imported: number; skipped: number }> =>
+      ipcRenderer.invoke('sessions:importMoba', filePath)
   },
 
   groups: {

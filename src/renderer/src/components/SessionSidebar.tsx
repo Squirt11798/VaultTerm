@@ -13,6 +13,7 @@ interface Props {
   onCreateGroup: (name: string) => void
   onRenameGroup: (oldName: string, newName: string) => void
   onDeleteGroup: (name: string) => void
+  onImportMoba: () => void
 }
 
 type ContextTarget =
@@ -29,7 +30,7 @@ interface ContextMenu {
 export default function SessionSidebar({
   sessions, groups, collapsed, onToggleCollapse,
   onNewConnection, onOpenSession, onDeleteSession,
-  onMoveSession, onCreateGroup, onRenameGroup, onDeleteGroup
+  onMoveSession, onCreateGroup, onRenameGroup, onDeleteGroup, onImportMoba
 }: Props) {
   const [filter, setFilter] = useState('')
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null)
@@ -271,6 +272,8 @@ export default function SessionSidebar({
               <>
                 <button onClick={() => { onNewConnection(); closeCtx() }}>+ New Session</button>
                 <button onClick={startCreatingGroup}>📁 New Group</button>
+                <div className="ctx-divider" />
+                <button onClick={() => { onImportMoba(); closeCtx() }}>📥 Import from MobaXterm</button>
               </>
             )}
 

@@ -9,6 +9,7 @@ import { ipcMain, safeStorage, app } from 'electron'
 import { join } from 'path'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { randomUUID } from 'crypto'
+import { parseMobaConf } from './import-moba'
 
 export interface SavedSession {
   id: string
@@ -146,6 +147,39 @@ export function registerCredentialHandlers(): void {
   ipcMain.handle('groups:delete', (_e, name: string) => {
     saveGroups(loadGroups().filter(g => g !== name))
     save(load().map(s => s.group === name ? { ...s, group: '' } : s))
+  })
+
+  // ── MobaXterm import ──────────────────────────────────────────────────────
+  ipcMain.handle('sessions:importMoba', (_e, filePath: string) => {
+    const { sessions: imported, skipped } = parseMobaConf(filePath)
+    if (imported.length === 0) return { imported: 0, skipped }
+
+    const existing = load()
+    const groups = loadGroups()
+
+    for (const s of imported) {
+      // Ensure the group exists
+      if (s.group && !groups.includes(s.group)) {
+        groups.push(s.group)
+      }
+      existing.push({
+        id: randomUUID(),
+        name: s.name,
+        host: s.host,
+        port: s.port,
+        username: s.username,
+        authType: s.authType,
+        encryptedPassword: '',
+        encryptedPrivateKey: '',
+        passphrase: '',
+        group: s.group,
+        createdAt: new Date().toISOString()
+      })
+    }
+
+    saveGroups(groups)
+    save(existing)
+    return { imported: imported.length, skipped }
   })
 
   // Returns decrypted credentials — only called internally by ssh-manager via direct import

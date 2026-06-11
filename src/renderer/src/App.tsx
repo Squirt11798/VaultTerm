@@ -4,6 +4,7 @@ import Terminal from './components/Terminal'
 import SftpPanel from './components/SftpPanel'
 import ConnectModal from './components/ConnectModal'
 import ResourceMonitor from './components/ResourceMonitor'
+import ImportMobaModal from './components/ImportMobaModal'
 
 export interface Tab {
   id: string
@@ -30,6 +31,7 @@ export default function App() {
   const [sessions, setSessions] = useState<SavedSession[]>([])
   const [groups, setGroups] = useState<string[]>([])
   const [showConnect, setShowConnect] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [connectPrefill, setConnectPrefill] = useState<SavedSession | null>(null)
   const [connectDefaultGroup, setConnectDefaultGroup] = useState<string | undefined>()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -144,6 +146,7 @@ export default function App() {
           onCreateGroup={createGroup}
           onRenameGroup={renameGroup}
           onDeleteGroup={deleteGroup}
+          onImportMoba={() => setShowImport(true)}
         />
 
         {/* Main area */}
@@ -217,6 +220,13 @@ export default function App() {
           )}
         </div>
       </div>
+
+      {showImport && (
+        <ImportMobaModal
+          onImported={loadSessions}
+          onClose={() => setShowImport(false)}
+        />
+      )}
 
       {showConnect && (
         <ConnectModal

@@ -309,6 +309,29 @@ body { font-family: system-ui, sans-serif; font-size: 13px; color: var(--text); 
   display: flex; justify-content: flex-end; gap: 8px;
 }
 
+/* Import modal */
+.import-modal { width: 500px; }
+.import-step { display: flex; flex-direction: column; gap: 10px; }
+.import-icon { font-size: 32px; text-align: center; margin-bottom: 4px; }
+.import-step p { color: var(--text); font-size: 13px; line-height: 1.5; }
+.import-notes { color: var(--text-dim); font-size: 12px; line-height: 1.6; padding-left: 18px; margin: 0; }
+.import-notes li { margin-bottom: 2px; }
+.import-hint { color: var(--text-dim); font-size: 11px; font-style: italic; }
+.import-file-row { display: flex; align-items: baseline; gap: 8px; }
+.import-file-label { color: var(--text-dim); font-size: 11px; white-space: nowrap; }
+.import-file-path {
+  color: var(--accent); font-size: 11px; font-family: monospace;
+  word-break: break-all; flex: 1;
+}
+.import-confirm-text { color: var(--text); font-size: 13px; line-height: 1.5; }
+.import-done p { font-size: 14px; }
+.import-skipped { color: var(--text-dim); font-size: 12px; }
+.import-error-msg {
+  background: var(--bg-3); border: 1px solid var(--border);
+  padding: 8px; border-radius: 4px; font-size: 11px;
+  color: var(--danger); white-space: pre-wrap; word-break: break-all;
+}
+
 .form-row { display: flex; flex-direction: column; gap: 4px; }
 .form-row label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
 .form-row input {
@@ -362,6 +385,7 @@ body { font-family: system-ui, sans-serif; font-size: 13px; color: var(--text); 
 }
 .context-menu button:hover { background: var(--bg-3); }
 .context-menu button.danger { color: var(--danger); }
+.ctx-divider { height: 1px; background: var(--border); margin: 3px 4px; }
 .context-menu-header {
   padding: 4px 14px 6px;
   font-size: 10px; color: var(--text-dim);
