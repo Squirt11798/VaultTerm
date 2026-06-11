@@ -18,6 +18,7 @@ export interface SavedSession {
   port: number
   username: string
   authType: 'password' | 'key'
+  keyPath: string             // path to key file on disk (not secret)
   // stored encrypted (base64) or empty string
   encryptedPassword: string
   encryptedPrivateKey: string
@@ -68,6 +69,7 @@ function decrypt(cipher: string): string {
 
 export function registerCredentialHandlers(): void {
   ipcMain.handle('sessions:list', (): Omit<SavedSession, 'encryptedPassword' | 'encryptedPrivateKey' | 'passphrase'>[] => {
+    // keyPath is NOT sensitive — it's just a file path — so it flows through in ...rest
     return load().map(({ encryptedPassword: _p, encryptedPrivateKey: _k, passphrase: _pp, ...rest }) => rest)
   })
 
@@ -78,6 +80,7 @@ export function registerCredentialHandlers(): void {
     port: number
     username: string
     authType: 'password' | 'key'
+    keyPath?: string
     password?: string
     privateKey?: string
     passphrase?: string
@@ -109,6 +112,7 @@ export function registerCredentialHandlers(): void {
       port,
       username: session.username.trim(),
       authType: session.authType,
+      keyPath: session.keyPath ?? (sessions[idx]?.keyPath ?? ''),
       encryptedPassword: session.password ? encrypt(session.password) : (sessions[idx]?.encryptedPassword ?? ''),
       encryptedPrivateKey: session.privateKey ? encrypt(session.privateKey) : (sessions[idx]?.encryptedPrivateKey ?? ''),
       passphrase: session.passphrase ? encrypt(session.passphrase) : (sessions[idx]?.passphrase ?? ''),
@@ -169,6 +173,7 @@ export function registerCredentialHandlers(): void {
         port: s.port,
         username: s.username,
         authType: s.authType,
+        keyPath: s.keyPath || '',
         encryptedPassword: '',
         encryptedPrivateKey: '',
         passphrase: '',

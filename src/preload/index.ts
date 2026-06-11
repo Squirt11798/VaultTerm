@@ -44,7 +44,15 @@ const api = {
       const handler = (_e: Electron.IpcRendererEvent, connId: string) => cb(connId)
       ipcRenderer.on('ssh:closed', handler)
       return () => ipcRenderer.off('ssh:closed', handler)
-    }
+    },
+    onPrompt: (cb: (connId: string, promptId: string, name: string, instructions: string, prompts: Array<{ prompt: string; echo: boolean }>) => void) => {
+      const handler = (_e: Electron.IpcRendererEvent, connId: string, promptId: string, name: string, instructions: string, prompts: Array<{ prompt: string; echo: boolean }>) =>
+        cb(connId, promptId, name, instructions, prompts)
+      ipcRenderer.on('ssh:prompt', handler)
+      return () => ipcRenderer.off('ssh:prompt', handler)
+    },
+    respondPrompt: (promptId: string, answers: string[]) =>
+      ipcRenderer.send('ssh:promptResponse', promptId, answers)
   },
 
   sftp: {

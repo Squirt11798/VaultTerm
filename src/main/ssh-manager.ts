@@ -13,6 +13,8 @@ interface Connection {
 }
 
 const connections = new Map<string, Connection>()
+// keyboard-interactive finish callbacks keyed by promptId
+const pendingPrompts = new Map<string, (answers: string[]) => void>()
 
 function send(win: BrowserWindow, channel: string, ...args: unknown[]): void {
   if (!win.isDestroyed()) win.webContents.send(channel, ...args)
@@ -54,34 +56,50 @@ export function registerSshHandlers(win: BrowserWindow): void {
     let privateKey: Buffer | undefined
     let passphrase: string | undefined
 
+    const loadKeyFile = (keyPath: string, passphraseHint?: string): { key: Buffer; passphrase?: string } => {
+      if (!existsSync(keyPath)) {
+        throw new Error(
+          `Key file not found:\n${keyPath}\n\nBrowse to the correct key file in the session editor.`
+        )
+      }
+      const key = readFileSync(keyPath)
+      // PPK v3 (PuTTY 0.75+) is not supported by ssh2 — must be converted first
+      if (key.slice(0, 30).toString('utf-8').startsWith('PuTTY-User-Key-File-3:')) {
+        throw new Error(
+          'PuTTY PPK v3 format is not supported.\n\n' +
+          'Convert the key to OpenSSH format using PuTTYgen:\n' +
+          '  1. Open PuTTYgen and load the key\n' +
+          '  2. Conversions → Export OpenSSH key\n' +
+          '  3. Save the file, then browse to it in VaultTerm'
+        )
+      }
+      return { key, passphrase: passphraseHint || undefined }
+    }
+
     if (opts.sessionId) {
-      // Load from vault
+      // Load credentials from vault
       const creds = getDecryptedCredentials(opts.sessionId)
       if (!creds) throw new Error('Session not found')
       password = creds.password || undefined
-      privateKey = creds.privateKey ? Buffer.from(creds.privateKey) : undefined
       passphrase = creds.passphrase || undefined
+
+      if (creds.privateKey) {
+        // Vault has the key content stored (legacy encrypted blob)
+        privateKey = Buffer.from(creds.privateKey)
+      } else if (opts.privateKeyPath) {
+        // Vault has no key content — read from the file path saved with the session.
+        // passphrase comes from vault first (saved on prior connect), then opts fallback.
+        const loaded = loadKeyFile(opts.privateKeyPath, passphrase || opts.passphrase)
+        privateKey = loaded.key
+        passphrase = loaded.passphrase
+      }
     } else {
       password = opts.password
       if (opts.privateKeyPath) {
-        if (!existsSync(opts.privateKeyPath)) {
-          throw new Error(
-            `Key file not found:\n${opts.privateKeyPath}\n\nBrowse to the correct key file in the session editor.`
-          )
-        }
-        privateKey = readFileSync(opts.privateKeyPath)
-        // PPK v3 (PuTTY 0.75+) is not supported by ssh2 — must be converted first
-        if (privateKey.slice(0, 30).toString('utf-8').startsWith('PuTTY-User-Key-File-3:')) {
-          throw new Error(
-            'PuTTY PPK v3 format is not supported.\n\n' +
-            'Convert the key to OpenSSH format using PuTTYgen:\n' +
-            '  1. Open PuTTYgen and load the key\n' +
-            '  2. Conversions → Export OpenSSH key\n' +
-            '  3. Save the file, then browse to it in VaultTerm'
-          )
-        }
+        const loaded = loadKeyFile(opts.privateKeyPath, opts.passphrase)
+        privateKey = loaded.key
+        passphrase = loaded.passphrase
       }
-      passphrase = opts.passphrase
     }
 
     const connId = randomUUID()
@@ -133,10 +151,18 @@ export function registerSshHandlers(win: BrowserWindow): void {
         }
       })
 
+      // keyboard-interactive: when prompts arrive, forward to renderer and await answers
+      client.on('keyboard-interactive', (name, instructions, _lang, prompts, finish) => {
+        const promptId = randomUUID()
+        pendingPrompts.set(promptId, finish)
+        send(win, 'ssh:prompt', connId, promptId, name, instructions, prompts)
+      })
+
       const connectConfig: Parameters<Client['connect']>[0] = {
         host,
         port,
         username,
+        tryKeyboard: true,
         readyTimeout: 20000,
         keepaliveInterval: 10000,
 
@@ -217,6 +243,14 @@ export function registerSshHandlers(win: BrowserWindow): void {
     if (conn) {
       conn.client.end()
       connections.delete(connId)
+    }
+  })
+
+  ipcMain.on('ssh:promptResponse', (_e, promptId: string, answers: string[]) => {
+    const finish = pendingPrompts.get(promptId)
+    if (finish) {
+      pendingPrompts.delete(promptId)
+      finish(answers)
     }
   })
 

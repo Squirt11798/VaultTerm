@@ -5,6 +5,7 @@ import SftpPanel from './components/SftpPanel'
 import ConnectModal from './components/ConnectModal'
 import ResourceMonitor from './components/ResourceMonitor'
 import ImportMobaModal from './components/ImportMobaModal'
+import SshPromptModal from './components/SshPromptModal'
 
 export interface Tab {
   id: string
@@ -19,8 +20,17 @@ export interface SavedSession {
   port: number
   username: string
   authType: 'password' | 'key'
+  keyPath: string   // path to key file; empty for password auth
   group: string
   createdAt: string
+}
+
+interface SshPromptData {
+  connId: string
+  promptId: string
+  name: string
+  instructions: string
+  prompts: Array<{ prompt: string; echo: boolean }>
 }
 
 type RightPanel = 'sftp' | 'none'
@@ -32,6 +42,7 @@ export default function App() {
   const [groups, setGroups] = useState<string[]>([])
   const [showConnect, setShowConnect] = useState(false)
   const [showImport, setShowImport] = useState(false)
+  const [sshPrompt, setSshPrompt] = useState<SshPromptData | null>(null)
   const [connectPrefill, setConnectPrefill] = useState<SavedSession | null>(null)
   const [connectDefaultGroup, setConnectDefaultGroup] = useState<string | undefined>()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -49,14 +60,17 @@ export default function App() {
 
   useEffect(() => {
     loadSessions()
-    const unsub = window.api.ssh.onClosed((connId) => {
+    const unsubClosed = window.api.ssh.onClosed((connId) => {
       setTabs(prev => {
         const next = prev.filter(t => t.id !== connId)
         setActiveTab(prev2 => prev2 === connId ? (next[next.length - 1]?.id ?? null) : prev2)
         return next
       })
     })
-    return unsub
+    const unsubPrompt = window.api.ssh.onPrompt((connId, promptId, name, instructions, prompts) => {
+      setSshPrompt({ connId, promptId, name, instructions, prompts })
+    })
+    return () => { unsubClosed(); unsubPrompt() }
   }, [loadSessions])
 
   const openConnection = useCallback(async (opts: {
@@ -69,7 +83,7 @@ export default function App() {
     privateKeyPath?: string
     passphrase?: string
     label: string
-  }) => {
+  }): Promise<void> => {
     try {
       const { id } = await window.api.ssh.connect(opts)
       const tab: Tab = { id, label: opts.label, host: opts.host }
@@ -77,7 +91,8 @@ export default function App() {
       setActiveTab(id)
       setShowConnect(false)
     } catch (err: unknown) {
-      alert(`Connection failed: ${err instanceof Error ? err.message : String(err)}`)
+      alert(`Connection failed:\n\n${err instanceof Error ? err.message : String(err)}`)
+      throw err   // rethrow so ConnectModal resets its connecting state
     }
   }, [])
 
@@ -225,6 +240,23 @@ export default function App() {
         <ImportMobaModal
           onImported={loadSessions}
           onClose={() => setShowImport(false)}
+        />
+      )}
+
+      {sshPrompt && (
+        <SshPromptModal
+          promptId={sshPrompt.promptId}
+          name={sshPrompt.name}
+          instructions={sshPrompt.instructions}
+          prompts={sshPrompt.prompts}
+          onRespond={(promptId, answers) => {
+            window.api.ssh.respondPrompt(promptId, answers)
+            setSshPrompt(null)
+          }}
+          onCancel={(promptId) => {
+            window.api.ssh.respondPrompt(promptId, sshPrompt.prompts.map(() => ''))
+            setSshPrompt(null)
+          }}
         />
       )}
 

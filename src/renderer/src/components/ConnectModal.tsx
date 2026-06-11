@@ -17,7 +17,7 @@ interface Props {
   prefill: SavedSession | null
   defaultGroup?: string
   groups: string[]
-  onConnect: (opts: ConnectOpts) => void
+  onConnect: (opts: ConnectOpts) => Promise<void>
   onSave: (session: object) => Promise<string>
   onClose: () => void
 }
@@ -29,7 +29,7 @@ export default function ConnectModal({ prefill, defaultGroup, groups, onConnect,
   const [username, setUsername] = useState(prefill?.username ?? '')
   const [authType, setAuthType] = useState<'password' | 'key'>(prefill?.authType ?? 'password')
   const [password, setPassword] = useState('')
-  const [keyPath, setKeyPath] = useState('')
+  const [keyPath, setKeyPath] = useState(prefill?.keyPath ?? '')
   const [passphrase, setPassphrase] = useState('')
   const [group, setGroup] = useState(prefill?.group ?? defaultGroup ?? '')
   const [connecting, setConnecting] = useState(false)
@@ -53,6 +53,8 @@ export default function ConnectModal({ prefill, defaultGroup, groups, onConnect,
     username,
     authType,
     password: authType === 'password' ? password : undefined,
+    keyPath: authType === 'key' ? keyPath : '',
+    passphrase: authType === 'key' ? passphrase : undefined,
     group
   })
 
@@ -62,7 +64,7 @@ export default function ConnectModal({ prefill, defaultGroup, groups, onConnect,
     setConnecting(true)
     try {
       const savedId = await onSave(buildSessionObj())
-      onConnect({
+      await onConnect({
         sessionId: savedId ?? prefill?.id,
         host,
         port: parseInt(port) || 22,
@@ -73,9 +75,10 @@ export default function ConnectModal({ prefill, defaultGroup, groups, onConnect,
         passphrase: authType === 'key' ? passphrase : undefined,
         label: name || `${username}@${host}`
       })
-    } catch (err) {
+      // Success path: App.tsx closes the modal, component unmounts
+    } catch {
+      // Error already shown by openConnection alert; just re-enable the button
       setConnecting(false)
-      throw err
     }
   }
 
