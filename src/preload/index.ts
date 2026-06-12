@@ -63,6 +63,13 @@ const api = {
     disconnect: (connId: string) => ipcRenderer.invoke('serial:disconnect', connId)
   },
 
+  settings: {
+    get: (): Promise<{ theme: string; fontFamily: string; fontSize: number; defaultGroup: string }> =>
+      ipcRenderer.invoke('settings:get'),
+    set: (patch: object): Promise<{ theme: string; fontFamily: string; fontSize: number; defaultGroup: string }> =>
+      ipcRenderer.invoke('settings:set', patch)
+  },
+
   tunnels: {
     list: (): Promise<unknown[]> => ipcRenderer.invoke('tunnels:list'),
     listSessions: (): Promise<Array<{ id: string; name: string; host: string }>> =>

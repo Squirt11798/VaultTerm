@@ -1,7 +1,9 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Military / tactical palette — dark olive field base, brass-amber accent */
+  /* Military / tactical palette — dark olive field base, brass-amber accent.
+     This is the default theme ("olive"). Other themes override the color vars
+     below via [data-theme="..."]; layout vars stay constant. */
   --bg-0: #0e120b;   /* near-black olive */
   --bg-1: #161c10;
   --bg-2: #1e2616;
@@ -17,6 +19,54 @@
   --tab-h: 36px;
   --titlebar-h: 32px;
   --sidebar-w: 220px;
+}
+
+/* Desert — tan / sand field with coyote-brown accent */
+[data-theme="desert"] {
+  --bg-0: #1a1611;
+  --bg-1: #221d16;
+  --bg-2: #2c251b;
+  --bg-3: #3a3022;
+  --accent: #c79a5a;
+  --accent-dim: #7a5f33;
+  --text: #e6dcc6;
+  --text-dim: #a3957a;
+  --danger: #cf5a3c;
+  --success: #9bb04a;
+  --border: #463a28;
+  --on-accent: #1a1611;
+}
+
+/* Navy — dark slate-blue with steel accent */
+[data-theme="navy"] {
+  --bg-0: #0c1018;
+  --bg-1: #111722;
+  --bg-2: #161f2e;
+  --bg-3: #1f2c40;
+  --accent: #5b8fc4;
+  --accent-dim: #345172;
+  --text: #cdd6e3;
+  --text-dim: #7589a3;
+  --danger: #e0654a;
+  --success: #5fb98a;
+  --border: #25334a;
+  --on-accent: #0c1018;
+}
+
+/* Light — high-contrast paper for bright environments */
+[data-theme="light"] {
+  --bg-0: #ffffff;
+  --bg-1: #f1f1ec;
+  --bg-2: #e7e7e0;
+  --bg-3: #d8d8cf;
+  --accent: #8a6d1f;
+  --accent-dim: #b89a4a;
+  --text: #20231a;
+  --text-dim: #6a6c5e;
+  --danger: #b23a1f;
+  --success: #4f7d1f;
+  --border: #c7c7bb;
+  --on-accent: #ffffff;
 }
 
 html, body, #root { height: 100%; overflow: hidden; }
@@ -346,6 +396,19 @@ body { font-family: system-ui, sans-serif; font-size: 13px; color: var(--text); 
   padding: 8px; border-radius: 4px; font-size: 11px;
   color: var(--danger); white-space: pre-wrap; word-break: break-all;
 }
+
+/* Settings — theme cards */
+.theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.theme-card {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 5px;
+  background: var(--bg-2); color: var(--text); cursor: pointer;
+  font-size: 13px; text-align: left;
+}
+.theme-card:hover { background: var(--bg-3); }
+.theme-card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.theme-dot { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 1px rgba(0,0,0,0.3); }
+.settings-preview-note { color: var(--text-dim); font-size: 11px; font-style: italic; margin-top: 4px; }
 
 /* SSH Tunnels */
 .tunnel-modal { width: 600px; max-width: 92vw; }

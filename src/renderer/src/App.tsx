@@ -7,6 +7,8 @@ import ResourceMonitor from './components/ResourceMonitor'
 import ImportMobaModal from './components/ImportMobaModal'
 import SshPromptModal from './components/SshPromptModal'
 import TunnelManager from './components/TunnelManager'
+import SettingsModal from './components/SettingsModal'
+import type { AppSettings } from './components/SettingsModal'
 
 export interface Tab {
   id: string
@@ -52,6 +54,13 @@ export default function App() {
   const [showConnect, setShowConnect] = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [showTunnels, setShowTunnels] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [settings, setSettings] = useState<AppSettings>({
+    theme: 'olive',
+    fontFamily: '"Cascadia Code", "Fira Code", "Consolas", monospace',
+    fontSize: 14,
+    defaultGroup: ''
+  })
   const [sshPrompt, setSshPrompt] = useState<SshPromptData | null>(null)
   const [connectPrefill, setConnectPrefill] = useState<SavedSession | null>(null)
   const [connectDefaultGroup, setConnectDefaultGroup] = useState<string | undefined>()
@@ -66,6 +75,22 @@ export default function App() {
     ])
     setSessions(list as SavedSession[])
     setGroups(grps)
+  }, [])
+
+  // Load persisted settings once on startup
+  useEffect(() => {
+    window.api.settings.get().then(s => setSettings(s as AppSettings)).catch(() => {})
+  }, [])
+
+  // Apply the active theme to the document root whenever it changes
+  useEffect(() => {
+    document.documentElement.dataset.theme = settings.theme
+  }, [settings.theme])
+
+  // Persist + live-apply a settings change
+  const applySettings = useCallback((patch: Partial<AppSettings>) => {
+    setSettings(prev => ({ ...prev, ...patch }))
+    window.api.settings.set(patch).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -197,7 +222,7 @@ export default function App() {
           groups={groups}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(v => !v)}
-          onNewConnection={(group) => { setConnectPrefill(null); setConnectDefaultGroup(group); setShowConnect(true) }}
+          onNewConnection={(group) => { setConnectPrefill(null); setConnectDefaultGroup(group ?? (settings.defaultGroup || undefined)); setShowConnect(true) }}
           onOpenSession={(s) => { setConnectPrefill(s); setConnectDefaultGroup(undefined); setShowConnect(true) }}
           onDeleteSession={async (id) => { await window.api.sessions.delete(id); loadSessions() }}
           onMoveSession={moveSession}
@@ -206,6 +231,7 @@ export default function App() {
           onDeleteGroup={deleteGroup}
           onImportMoba={() => setShowImport(true)}
           onShowTunnels={() => setShowTunnels(true)}
+          onShowSettings={() => setShowSettings(true)}
         />
 
         {/* Main area */}
@@ -228,7 +254,7 @@ export default function App() {
                   >✕</button>
                 </div>
               ))}
-              <button className="tab-new" onClick={() => { setConnectPrefill(null); setConnectDefaultGroup(undefined); setShowConnect(true) }}>+</button>
+              <button className="tab-new" onClick={() => { setConnectPrefill(null); setConnectDefaultGroup(settings.defaultGroup || undefined); setShowConnect(true) }}>+</button>
 
               {/* Right-side toolbar icons */}
               <div className="tab-toolbar">
@@ -257,7 +283,13 @@ export default function App() {
             {tabs.map(tab => (
               <div key={tab.id} className={`tab-content ${tab.id === activeTab ? 'visible' : 'hidden'}`}>
                 <div className={`pane-wrapper ${rightPanel === 'sftp' ? 'split' : ''}`}>
-                  <Terminal connId={tab.id} active={tab.id === activeTab} />
+                  <Terminal
+                    connId={tab.id}
+                    active={tab.id === activeTab}
+                    fontFamily={settings.fontFamily}
+                    fontSize={settings.fontSize}
+                    theme={settings.theme}
+                  />
                   {rightPanel === 'sftp' && <SftpPanel connId={tab.id} />}
                 </div>
               </div>
@@ -268,7 +300,7 @@ export default function App() {
                 <div className="empty-logo">⚡</div>
                 <h2>CommConsole</h2>
                 <p>No active connections</p>
-                <button className="btn-primary" onClick={() => { setConnectPrefill(null); setConnectDefaultGroup(undefined); setShowConnect(true) }}>
+                <button className="btn-primary" onClick={() => { setConnectPrefill(null); setConnectDefaultGroup(settings.defaultGroup || undefined); setShowConnect(true) }}>
                   New Connection
                 </button>
               </div>
@@ -290,6 +322,15 @@ export default function App() {
       )}
 
       {showTunnels && <TunnelManager onClose={() => setShowTunnels(false)} />}
+
+      {showSettings && (
+        <SettingsModal
+          settings={settings}
+          groups={groups}
+          onApply={applySettings}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
 
       {sshPrompt && (
         <SshPromptModal

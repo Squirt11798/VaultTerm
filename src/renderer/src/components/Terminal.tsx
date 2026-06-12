@@ -7,9 +7,48 @@ import '@xterm/xterm/css/xterm.css'
 interface Props {
   connId: string
   active: boolean
+  fontFamily?: string
+  fontSize?: number
+  theme?: string
 }
 
-export default function Terminal({ connId, active }: Props) {
+const DARK_ANSI = {
+  black: '#1a1e12', brightBlack: '#4a5238',
+  red: '#cf5a3c', brightRed: '#e07a5a',
+  green: '#8bbf3f', brightGreen: '#a6d65c',
+  yellow: '#c9a227', brightYellow: '#e6c34a',
+  blue: '#5f86a8', brightBlue: '#7ba3c4',
+  magenta: '#a86f9e', brightMagenta: '#c48fbb',
+  cyan: '#5fae9e', brightCyan: '#7fcab8',
+  white: '#d6d8c2', brightWhite: '#f0f0e0'
+}
+
+const LIGHT_ANSI = {
+  black: '#20231a', brightBlack: '#6a6c5e',
+  red: '#b23a1f', brightRed: '#d4542f',
+  green: '#4f7d1f', brightGreen: '#6a9e2f',
+  yellow: '#8a6d1f', brightYellow: '#b8902f',
+  blue: '#2f5f8a', brightBlue: '#4f7fae',
+  magenta: '#7a3f6e', brightMagenta: '#9a5f8e',
+  cyan: '#2f7e6e', brightCyan: '#4f9e8e',
+  white: '#20231a', brightWhite: '#000000'
+}
+
+// Build the xterm theme from the active CSS theme variables so the terminal
+// matches whatever app theme is selected.
+function buildTermTheme(theme?: string): Record<string, string> {
+  const v = (name: string): string =>
+    getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  return {
+    background: v('--bg-0') || '#0e120b',
+    foreground: v('--text') || '#d6d8c2',
+    cursor: v('--accent') || '#b9a44a',
+    selectionBackground: v('--bg-3') || '#29331d',
+    ...(theme === 'light' ? LIGHT_ANSI : DARK_ANSI)
+  }
+}
+
+export default function Terminal({ connId, active, fontFamily, fontSize, theme }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<XTerm | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
@@ -19,32 +58,10 @@ export default function Terminal({ connId, active }: Props) {
 
     const term = new XTerm({
       cursorBlink: true,
-      fontFamily: '"Cascadia Code", "Fira Code", "Consolas", monospace',
-      fontSize: 14,
+      fontFamily: fontFamily || '"Cascadia Code", "Fira Code", "Consolas", monospace',
+      fontSize: fontSize || 14,
       lineHeight: 1.2,
-      theme: {
-        // Military / tactical palette to match the app shell
-        background: '#0e120b',
-        foreground: '#d6d8c2',
-        cursor: '#b9a44a',
-        selectionBackground: '#29331d',
-        black: '#1a1e12',
-        brightBlack: '#4a5238',
-        red: '#cf5a3c',
-        brightRed: '#e07a5a',
-        green: '#8bbf3f',
-        brightGreen: '#a6d65c',
-        yellow: '#c9a227',
-        brightYellow: '#e6c34a',
-        blue: '#5f86a8',
-        brightBlue: '#7ba3c4',
-        magenta: '#a86f9e',
-        brightMagenta: '#c48fbb',
-        cyan: '#5fae9e',
-        brightCyan: '#7fcab8',
-        white: '#d6d8c2',
-        brightWhite: '#f0f0e0'
-      },
+      theme: buildTermTheme(theme),
       allowProposedApi: true
     })
 
@@ -103,6 +120,16 @@ export default function Terminal({ connId, active }: Props) {
       setTimeout(() => fitAddonRef.current?.fit(), 50)
     }
   }, [active])
+
+  // Apply live font / theme changes without recreating the terminal
+  useEffect(() => {
+    const term = termRef.current
+    if (!term) return
+    if (fontFamily) term.options.fontFamily = fontFamily
+    if (fontSize) term.options.fontSize = fontSize
+    term.options.theme = buildTermTheme(theme)
+    fitAddonRef.current?.fit()
+  }, [fontFamily, fontSize, theme])
 
   return <div ref={containerRef} className="terminal-container" />
 }
