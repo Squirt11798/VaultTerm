@@ -80,7 +80,7 @@ export default function ImportMobaModal({ onImported, onClose }: Props) {
                 <span className="import-file-path" title={filePath}>{filePath}</span>
               </div>
               <p className="import-confirm-text">
-                Click <strong>Import</strong> to read this file and add all SSH sessions to VaultTerm.
+                Click <strong>Import</strong> to read this file and add all SSH sessions to CommConsole.
                 Sessions with passwords will be imported without credentials — you will be prompted on first connect.
               </p>
             </div>

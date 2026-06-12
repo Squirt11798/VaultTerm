@@ -1,7 +1,7 @@
 {
-  "name": "vaultterm",
+  "name": "commconsole",
   "version": "1.4.0",
-  "description": "Secure SSH terminal client with SFTP file browser",
+  "description": "CommConsole — secure SSH, serial/COM, and SFTP terminal client",
   "main": "out/main/index.js",
   "author": "Derrick Frey",
   "license": "MIT",
@@ -10,7 +10,7 @@
     "build": "electron-vite build",
     "predist": "node scripts/setup-wcs.mjs",
     "dist": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win portable",
-    "dist:folder": "npm run build && electron-packager . VaultTerm --platform=win32 --arch=x64 --out=dist --overwrite --icon=assets/icon.ico --ignore=src --ignore=node_modules/.cache",
+    "dist:folder": "npm run build && electron-packager . CommConsole --platform=win32 --arch=x64 --out=dist --overwrite --icon=assets/icon.ico --ignore=src --ignore=node_modules/.cache",
     "make-icon": "node scripts/make-icon.mjs",
     "rebuild": "electron-rebuild -f -w serialport",
     "typecheck": "tsc --noEmit"
@@ -44,8 +44,8 @@
     "vite": "^5.3.1"
   },
   "build": {
-    "appId": "com.vaultterm.app",
-    "productName": "VaultTerm",
+    "appId": "com.commconsole.app",
+    "productName": "CommConsole",
     "directories": {
       "output": "dist"
     },
@@ -65,14 +65,14 @@
       "icon": "assets/icon.ico"
     },
     "portable": {
-      "artifactName": "VaultTerm-${version}-portable.exe"
+      "artifactName": "CommConsole-${version}-portable.exe"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "artifactName": "VaultTerm-${version}-Setup.exe"
+      "artifactName": "CommConsole-${version}-Setup.exe"
     }
   }
 }

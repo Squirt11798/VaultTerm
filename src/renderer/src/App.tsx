@@ -177,7 +177,7 @@ export default function App() {
       {/* Custom title bar */}
       <div className="titlebar" onDoubleClick={() => window.api.window.maximize()}>
         <div className="titlebar-drag" />
-        <span className="titlebar-title">VaultTerm</span>
+        <span className="titlebar-title">CommConsole</span>
         <div className="titlebar-controls">
           <button onClick={() => window.api.window.minimize()}>─</button>
           <button onClick={() => window.api.window.maximize()}>□</button>
@@ -258,7 +258,7 @@ export default function App() {
             {tabs.length === 0 && (
               <div className="empty-state">
                 <div className="empty-logo">⚡</div>
-                <h2>VaultTerm</h2>
+                <h2>CommConsole</h2>
                 <p>No active connections</p>
                 <button className="btn-primary" onClick={() => { setConnectPrefill(null); setConnectDefaultGroup(undefined); setShowConnect(true) }}>
                   New Connection

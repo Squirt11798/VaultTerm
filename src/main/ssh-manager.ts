@@ -70,7 +70,7 @@ export function registerSshHandlers(win: BrowserWindow): void {
           'Convert the key to OpenSSH format using PuTTYgen:\n' +
           '  1. Open PuTTYgen and load the key\n' +
           '  2. Conversions → Export OpenSSH key\n' +
-          '  3. Save the file, then browse to it in VaultTerm'
+          '  3. Save the file, then browse to it in CommConsole'
         )
       }
       return { key, passphrase: passphraseHint || undefined }
