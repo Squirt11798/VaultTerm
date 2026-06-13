@@ -167,6 +167,10 @@ export default function App() {
       })
     })
     const unsubPrompt = window.api.ssh.onPrompt((connId, promptId, name, instructions, prompts) => {
+      // Keyboard-interactive fallback (e.g. no/incorrect password). Close the
+      // connect dialog so the prompt is the sole, focused modal — otherwise the
+      // still-open ConnectModal paints on top and the prompt looks "locked".
+      setShowConnect(false)
       setSshPrompt({ connId, promptId, name, instructions, prompts })
     })
     return () => { unsubClosed(); unsubPrompt() }

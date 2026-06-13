@@ -32,7 +32,7 @@ export default function SshPromptModal({ promptId, name, instructions, prompts, 
   }
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" style={{ zIndex: 1000 }}>
       <div className="modal">
         <div className="modal-header">
           <h2>Authentication Required</h2>
