@@ -18,12 +18,12 @@ password and TOTP 2FA, and every trusted host key is verified on first use.
 
 ## Highlights
 
-- 🔐 **Encrypted credential vault** — passwords and keys protected by Windows DPAPI, with an optional master password (AES-256-GCM) and TOTP-gated app lock.
-- 🖥️ **SSH, Serial, and SFTP in one app** — full xterm.js terminal, COM-port console, and a built-in file browser.
-- 🔀 **Tunnels** — local (`-L`), remote (`-R`), and dynamic SOCKS5 (`-D`) port forwarding, plus jump-host / ProxyJump chaining.
-- ⚡ **Productivity** — split/tiled multi-terminal view, broadcast input, snippets library, session logging, and scrollback search.
-- 🎨 **Themeable** — Olive Drab, Desert, Navy, and Light themes; configurable terminal font and size.
-- 📦 **Portable** — one signed-free `.exe`, no installation, settings stored per-user.
+- **Encrypted credential vault** — passwords and keys protected by Windows DPAPI, with an optional master password (AES-256-GCM) and TOTP-gated app lock.
+- **SSH, Serial, and SFTP in one app** — full xterm.js terminal, COM-port console, and a built-in file browser.
+- **Tunnels** — local (`-L`), remote (`-R`), and dynamic SOCKS5 (`-D`) port forwarding, plus jump-host / ProxyJump chaining.
+- **Productivity** — split/tiled multi-terminal view, broadcast input, snippets library, session logging, and scrollback search.
+- **Themeable** — Olive Drab, Desert, Navy, and Light themes; configurable terminal font and size.
+- **Portable** — one self-contained `.exe`, no installation, settings stored per-user.
 
 ---
 
