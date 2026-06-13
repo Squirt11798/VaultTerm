@@ -66,6 +66,7 @@ export default function App() {
   })
   const [locked, setLocked] = useState(false)
   const [totpEnabled, setTotpEnabled] = useState(false)
+  const [lockCfg, setLockCfg] = useState<{ enabled: boolean; idleMinutes: number }>({ enabled: false, idleMinutes: 0 })
   const [sshPrompt, setSshPrompt] = useState<SshPromptData | null>(null)
   const [connectPrefill, setConnectPrefill] = useState<SavedSession | null>(null)
   const [connectDefaultGroup, setConnectDefaultGroup] = useState<string | undefined>()
@@ -87,18 +88,47 @@ export default function App() {
     window.api.settings.get().then(s => setSettings(s as AppSettings)).catch(() => {})
   }, [])
 
+  // Re-read lock config (called on startup and whenever Settings closes)
+  const refreshLock = useCallback(() => {
+    return window.api.lock.status().then(st => {
+      setTotpEnabled(st.totpEnabled)
+      setLockCfg({ enabled: st.enabled, idleMinutes: st.idleMinutes })
+      return st
+    }).catch(() => null)
+  }, [])
+
   // Lock status on startup + subscribe to idle/forced locks
   useEffect(() => {
-    window.api.lock.status().then(st => {
-      setTotpEnabled(st.totpEnabled)
-      if (st.enabled && st.locked) setLocked(true)
-    }).catch(() => {})
+    refreshLock().then(st => { if (st && st.enabled && st.locked) setLocked(true) })
     const unsub = window.api.lock.onLocked(() => {
       window.api.lock.status().then(st => setTotpEnabled(st.totpEnabled)).catch(() => {})
       setLocked(true)
     })
     return unsub
-  }, [])
+  }, [refreshLock])
+
+  // App-level idle auto-lock: lock when there's been no interaction with
+  // CommConsole for the configured time (works even when the window is in the
+  // background — that's the point). Activity = mouse/keyboard/scroll/touch.
+  useEffect(() => {
+    if (!lockCfg.enabled || lockCfg.idleMinutes <= 0 || locked) return
+    const ms = lockCfg.idleMinutes * 60 * 1000
+    let timer: ReturnType<typeof setTimeout>
+    const arm = (): void => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        window.api.lock.lock().catch(() => {})
+        setLocked(true)
+      }, ms)
+    }
+    const events: Array<keyof WindowEventMap> = ['mousemove', 'mousedown', 'keydown', 'wheel', 'touchstart']
+    events.forEach(ev => window.addEventListener(ev, arm, { capture: true, passive: true }))
+    arm()
+    return () => {
+      clearTimeout(timer)
+      events.forEach(ev => window.removeEventListener(ev, arm, { capture: true }))
+    }
+  }, [lockCfg.enabled, lockCfg.idleMinutes, locked])
 
   // Apply the active theme to the document root whenever it changes
   useEffect(() => {
@@ -356,7 +386,7 @@ export default function App() {
           groups={groups}
           onApply={applySettings}
           onSessionsChanged={loadSessions}
-          onClose={() => setShowSettings(false)}
+          onClose={() => { setShowSettings(false); refreshLock() }}
         />
       )}
 

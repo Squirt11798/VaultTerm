@@ -7,7 +7,7 @@
  * verifier so the passphrase can be checked without storing it.
  */
 
-import { ipcMain, BrowserWindow, safeStorage, app, powerMonitor } from 'electron'
+import { ipcMain, BrowserWindow, safeStorage, app } from 'electron'
 import { join } from 'path'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { scryptSync, randomBytes, createHash, createHmac } from 'crypto'
@@ -196,14 +196,7 @@ export function registerLockHandlers(win: BrowserWindow): void {
     return { ok: true }
   })
 
-  // Idle auto-lock — poll the OS idle time.
-  setInterval(() => {
-    const c = loadCfg()
-    if (!c.enabled || locked || c.idleMinutes <= 0) return
-    if (powerMonitor.getSystemIdleTime() >= c.idleMinutes * 60) {
-      setMasterKey(null)
-      locked = true
-      if (!win.isDestroyed()) win.webContents.send('lock:locked')
-    }
-  }, 15000)
+  // Note: idle auto-lock is driven by the renderer (app-level activity), which
+  // locks when CommConsole specifically is idle — even when it's in the
+  // background. The renderer calls lock:lock when its idle timer fires.
 }
